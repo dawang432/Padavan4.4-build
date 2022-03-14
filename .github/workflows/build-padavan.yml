@@ -91,7 +91,7 @@ jobs:
         echo "CONFIG_FIRMWARE_INCLUDE_TUNSAFE=n" >> .config #TUNSAFE
         echo "CONFIG_FIRMWARE_INCLUDE_ALIDDNS=n" >> .config #阿里DDNS
         echo "CONFIG_FIRMWARE_INCLUDE_SMARTDNS=y" >> .config #smartdns
-        echo "CONFIG_FIRMWARE_INCLUDE_SMARTDNSBIN=y" >> .config #smartdns二进制文件
+        echo "CONFIG_FIRMWARE_INCLUDE_SMARTDNSBIN=n" >> .config #smartdns二进制文件
         echo "CONFIG_FIRMWARE_INCLUDE_SRELAY=n" >> .config #可以不集成
         echo "CONFIG_FIRMWARE_INCLUDE_CADDY=n" >> .config #在线文件管理服务
         echo "CONFIG_FIRMWARE_INCLUDE_CADDYBIN=n" >> .config #集成caddu执行文件，此文件有13M,请注意固件大小。如果不集成，会从网上下载下来执行，不影响正常使用
@@ -104,10 +104,16 @@ jobs:
         #格式如下：
         #sed -i '/自定义项/d' .config
         #echo "自定义项=y" >> .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_DROPBEAR=/d' .config
+        echo "CONFIG_FIRMWARE_INCLUDE_DROPBEAR=n" >> .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_OPENSSH=/d' .config
+        echo "CONFIG_FIRMWARE_INCLUDE_OPENSSH=y" >> .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_WIREGUARD=/d' .config
+        echo "CONFIG_FIRMWARE_INCLUDE_WIREGUARD=n" >> .config
         sed -i '/CONFIG_FIRMWARE_CPU_SLEEP=/d' .config
-        echo "CONFIG_FIRMWARE_CPU_SLEEP=y" >> .config
+        echo "CONFIG_FIRMWARE_CPU_SLEEP=n" >> .config
         sed -i '/CONFIG_FIRMWARE_INCLUDE_OPENVPN=/d' .config
-        echo "CONFIG_FIRMWARE_INCLUDE_OPENVPN=y" >> .config
+        echo "CONFIG_FIRMWARE_INCLUDE_OPENVPN=n" >> .config
         sed -i '/CONFIG_FIRMWARE_INCLUDE_DOGCOM=/d' .config
         echo "CONFIG_FIRMWARE_INCLUDE_DOGCOM=n" >> .config
         sed -i '/CONFIG_FIRMWARE_INCLUDE_NJIT_CLIENT=/d' .config
@@ -130,3 +136,11 @@ jobs:
       with:
         name: Padavan-packages
         path: /opt/images
+    - name: Upload firmware to WeTransfer
+      id: wetransfer
+      if: always()
+      run: |
+        curl -fsSL git.io/file-transfer | sh
+        ./transfer wet -s -p 16 --no-progress /opt/images 2>&1 | tee wetransfer.log
+        echo "::warning file=wetransfer.com::$(cat wetransfer.log | grep https)"
+        echo "::set-output name=url::$(cat wetransfer.log | grep https | cut -f3 -d" ")"
